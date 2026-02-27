@@ -46,18 +46,15 @@ public class PassengerManager : MonoBehaviour
 
         while (!found && attempts < 40)
         {
-            // slumpa riktning
             Vector2 dir = Random.insideUnitCircle.normalized;
 
-            // slumpa avstånd inom intervallet
             float dist = Random.Range(minDistance, maxDistance);
 
             Vector2 candidate = playerPos + dir * dist;
 
-            // checka att platsen är fri
             Collider2D hit = Physics2D.OverlapCircle(candidate, 0.4f);
 
-            if (hit == null) // inget blockerar platsen
+            if (hit == null) 
             {
                 spawnPos = candidate;
                 found = true;

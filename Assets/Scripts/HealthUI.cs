@@ -20,7 +20,6 @@ public class HealthUI : MonoBehaviour
         healthSlider.maxValue = max;
         healthSlider.value = current;
 
-        // Ändra färg
         if (current >= 3) fillImage.color = Color.green;
         else if (current == 2) fillImage.color = Color.yellow;
         else fillImage.color = Color.red;

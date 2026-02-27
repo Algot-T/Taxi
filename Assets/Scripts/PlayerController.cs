@@ -31,7 +31,6 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        // Init health
         currentHealth = maxHealth;
 
         if (HealthUI.Instance != null)
@@ -40,7 +39,6 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Tank controls
         moveInput = Input.GetAxis("Vertical");
         rotationInput = -Input.GetAxis("Horizontal");
 
@@ -49,10 +47,8 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Rotation
         rb.MoveRotation(rb.rotation + rotationInput * rotationSpeed * Time.fixedDeltaTime);
 
-        // Movement fram/back
         Vector2 movement = transform.up * moveInput * moveSpeed;
         rb.velocity = movement;
     }
@@ -60,12 +56,10 @@ public class PlayerController : MonoBehaviour
     private void UpdateArrowTarget()
     {
         if (arrow == null) return;
-        // Arrow använder redan PlayerController.HasPassenger()
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // === PICKUP PASSENGER ===
         if (!hasPassenger)
         {
             Passenger passenger = other.GetComponent<Passenger>();
@@ -81,7 +75,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // === REACH DESTINATION ===
         if (hasPassenger)
         {
             Destination destination = other.GetComponent<Destination>();
@@ -102,9 +95,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // =========================
-    // HEALTH SYSTEM
-    // =========================
 
     public void TakeDamage(int amount)
     {
@@ -126,11 +116,9 @@ public class PlayerController : MonoBehaviour
         Debug.Log("GAME OVER");
         rb.velocity = Vector2.zero;
 
-        // Visa Game Over UI
         GameOverManager.Instance.ShowGameOver();
     }
 
-    // =========================
 
     public bool HasPassenger()
     {
