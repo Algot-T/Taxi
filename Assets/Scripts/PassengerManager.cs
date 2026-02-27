@@ -34,13 +34,47 @@ public class PassengerManager : MonoBehaviour
         GameObject playerGO = GameObject.FindWithTag("Player");
         if (playerGO == null) return;
 
-        Vector2 spawnPos = MapManager.Instance.GetRandomFreePosition(
-            playerGO.transform.position, 5f);
+        Vector2 playerPos = playerGO.transform.position;
+
+        float minDistance = 3f;
+        float maxDistance = 8f;
+
+        Vector2 spawnPos = Vector2.zero;
+        bool found = false;
+
+        int attempts = 0;
+
+        while (!found && attempts < 40)
+        {
+            // slumpa riktning
+            Vector2 dir = Random.insideUnitCircle.normalized;
+
+            // slumpa avstånd inom intervallet
+            float dist = Random.Range(minDistance, maxDistance);
+
+            Vector2 candidate = playerPos + dir * dist;
+
+            // checka att platsen är fri
+            Collider2D hit = Physics2D.OverlapCircle(candidate, 0.4f);
+
+            if (hit == null) // inget blockerar platsen
+            {
+                spawnPos = candidate;
+                found = true;
+            }
+
+            attempts++;
+        }
+
+        if (!found)
+        {
+            Debug.LogWarning("Kunde inte hitta spawnplats nära spelaren.");
+            return;
+        }
 
         GameObject passenger = Instantiate(passengerPrefab, spawnPos, Quaternion.identity);
-        passenger.SetActive(true);
         currentPassenger = passenger.transform;
 
-        Debug.Log("Passenger spawned at: " + spawnPos);
+        Debug.Log("Passenger spawned near player at: " + spawnPos);
     }
 }

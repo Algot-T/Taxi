@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -7,6 +8,11 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5f;
     public float rotationSpeed = 200f;
 
+    [Header("Health")]
+    public int maxHealth = 5;
+    private int currentHealth;
+    [SerializeField] private HealthUI healthUI;
+
     [Header("References")]
     public IndicatorArrow arrow;
     public MoneyUI moneyUI;
@@ -14,12 +20,22 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private float moveInput;
     private float rotationInput;
+
     private bool hasPassenger = false;
     private int money = 0;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+    }
+
+    void Start()
+    {
+        // Init health
+        currentHealth = maxHealth;
+
+        if (HealthUI.Instance != null)
+            HealthUI.Instance.UpdateHealth(currentHealth, maxHealth);
     }
 
     void Update()
@@ -36,7 +52,7 @@ public class PlayerController : MonoBehaviour
         // Rotation
         rb.MoveRotation(rb.rotation + rotationInput * rotationSpeed * Time.fixedDeltaTime);
 
-        // Fram/back
+        // Movement fram/back
         Vector2 movement = transform.up * moveInput * moveSpeed;
         rb.velocity = movement;
     }
@@ -44,11 +60,12 @@ public class PlayerController : MonoBehaviour
     private void UpdateArrowTarget()
     {
         if (arrow == null) return;
+        // Arrow använder redan PlayerController.HasPassenger()
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Plocka upp passagerare
+        // === PICKUP PASSENGER ===
         if (!hasPassenger)
         {
             Passenger passenger = other.GetComponent<Passenger>();
@@ -56,14 +73,15 @@ public class PlayerController : MonoBehaviour
             {
                 passenger.PickUp();
                 hasPassenger = true;
-                Debug.Log("Passenger picked up by Player!");
+
+                Debug.Log("Passenger picked up!");
 
                 DestinationManager.Instance.SpawnDestination();
                 return;
             }
         }
 
-        // Leverera passagerare
+        // === REACH DESTINATION ===
         if (hasPassenger)
         {
             Destination destination = other.GetComponent<Destination>();
@@ -73,6 +91,7 @@ public class PlayerController : MonoBehaviour
                 hasPassenger = false;
 
                 money += destination.reward;
+
                 Debug.Log("Money: " + money);
 
                 if (moneyUI != null)
@@ -82,6 +101,36 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    // =========================
+    // HEALTH SYSTEM
+    // =========================
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+
+        Debug.Log("Taxi hit! Health: " + currentHealth);
+
+        if (HealthUI.Instance != null)
+            HealthUI.Instance.UpdateHealth(currentHealth, maxHealth);
+
+        if (currentHealth <= 0)
+        {
+            GameOver();
+        }
+    }
+
+    void GameOver()
+    {
+        Debug.Log("GAME OVER");
+        rb.velocity = Vector2.zero;
+
+        // Visa Game Over UI
+        GameOverManager.Instance.ShowGameOver();
+    }
+
+    // =========================
 
     public bool HasPassenger()
     {

@@ -8,6 +8,7 @@ public class Enemy : MonoBehaviour
 
     private Rigidbody2D rb;
     private Transform player;
+    private bool hasHit = false;
 
     void Awake()
     {
@@ -41,9 +42,21 @@ public class Enemy : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (hasHit) return;
+
         if (collision.gameObject.CompareTag("Player"))
         {
-            Debug.Log("Fiende träffade spelaren!");
+            hasHit = true;
+
+            PlayerController player =
+                collision.gameObject.GetComponent<PlayerController>();
+
+            if (player != null)
+            {
+                player.TakeDamage(1);
+            }
+
+            Destroy(gameObject); // fienden försvinner direkt
         }
     }
 }
