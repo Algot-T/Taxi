@@ -3,25 +3,50 @@ using UnityEngine.UI;
 
 public class HealthUI : MonoBehaviour
 {
-    public static HealthUI Instance;
-
-    public Slider healthSlider;
-    public Image fillImage;
+    public Slider slider;
+    public Color fullHealthColor = Color.green;
+    public Color midHealthColor = Color.yellow;
+    public Color lowHealthColor = Color.red;
+    private Image fillImage;
 
     void Awake()
     {
-        Instance = this;
+        if (slider != null)
+        {
+            fillImage = slider.fillRect.GetComponent<Image>();
+        }
     }
 
-    public void UpdateHealth(int current, int max)
+    public void SetMaxHealth(int maxHealth)
     {
-        if (healthSlider == null || fillImage == null) return;
+        if (slider != null)
+        {
+            slider.maxValue = maxHealth;
+            slider.value = maxHealth;
+            UpdateColor();
+        }
+    }
 
-        healthSlider.maxValue = max;
-        healthSlider.value = current;
+    public void SetHealth(int currentHealth)
+    {
+        if (slider != null)
+        {
+            slider.value = currentHealth;
+            UpdateColor();
+        }
+    }
 
-        if (current >= 3) fillImage.color = Color.green;
-        else if (current == 2) fillImage.color = Color.yellow;
-        else fillImage.color = Color.red;
+    private void UpdateColor()
+    {
+        if (fillImage == null) return;
+
+        float percent = slider.value / slider.maxValue;
+
+        if (percent >= 0.8f)
+            fillImage.color = fullHealthColor;
+        else if (percent >= 0.4f)
+            fillImage.color = midHealthColor;
+        else
+            fillImage.color = lowHealthColor;
     }
 }

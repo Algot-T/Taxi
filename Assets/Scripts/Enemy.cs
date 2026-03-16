@@ -8,11 +8,13 @@ public class Enemy : MonoBehaviour
 
     private Rigidbody2D rb;
     private Transform player;
-    private bool hasHit = false;
+    public bool hasHitPlayer = false;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        rb.gravityScale = 0;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
 
     void Start()
@@ -24,7 +26,11 @@ public class Enemy : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (player == null) return;
+        if (player == null || hasHitPlayer)
+        {
+            rb.velocity = Vector2.zero;
+            return;
+        }
 
         Vector2 direction = player.position - transform.position;
         float distance = direction.magnitude;
@@ -42,21 +48,21 @@ public class Enemy : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (hasHit) return;
+        if (hasHitPlayer) return;
 
         if (collision.gameObject.CompareTag("Player"))
         {
-            hasHit = true;
+            hasHitPlayer = true;
 
-            PlayerController player =
-                collision.gameObject.GetComponent<PlayerController>();
+            PlayerController playerController = collision.gameObject.GetComponent<PlayerController>();
 
-            if (player != null)
+            if (playerController != null)
             {
-                player.TakeDamage(1);
+                playerController.TakeDamage(1);
             }
 
-            Destroy(gameObject); // fienden försvinner direkt
+            rb.velocity = Vector2.zero;
+            Destroy(gameObject);
         }
     }
 }

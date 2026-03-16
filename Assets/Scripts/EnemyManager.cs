@@ -17,28 +17,32 @@ public class EnemyManager : MonoBehaviour
         SpawnEnemies();
     }
 
-    public void SpawnEnemies()
+    void Update()
+    {
+        if (GameObject.FindGameObjectsWithTag("Enemy").Length < maxEnemies)
+        {
+            SpawnEnemy();
+        }
+    }
+
+    void SpawnEnemies()
+    {
+        for (int i = 0; i < maxEnemies; i++)
+        {
+            SpawnEnemy();
+        }
+    }
+
+    void SpawnEnemy()
     {
         GameObject playerGO = GameObject.FindWithTag("Player");
         if (playerGO == null) return;
 
-        int attempts = 0;
-        int spawned = 0;
+        Vector2 spawnPos = MapManager.Instance.GetRandomFreePosition(Vector2.zero, 0f);
 
-        while (spawned < maxEnemies && attempts < 100) // max 100 försök för att undvika oändlig loop
+        if (Vector2.Distance(spawnPos, playerGO.transform.position) >= 7f)
         {
-            Vector2 spawnPos = MapManager.Instance.GetRandomFreePosition(Vector2.zero, 0f);
-
-            // Avståndskontroll: minst 7 rutor från spelaren
-            if (Vector2.Distance(spawnPos, playerGO.transform.position) >= 7f)
-            {
-                Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-                spawned++;
-            }
-
-            attempts++;
+            Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
         }
-
-        Debug.Log("Fiender spawnade: " + spawned);
     }
 }

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Passenger
   - Enemy
+  - Workshop
   layers:
   - Default
   - TransparentFX
