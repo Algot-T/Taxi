@@ -13,14 +13,6 @@ public class IndicatorArrow : MonoBehaviour
     [Header("Colors")]
     public Color passengerColor = Color.blue;
     public Color destinationColor = Color.green;
-    public Color workshopColor = Color.yellow;
-
-    public enum ArrowTarget
-    {
-        PassengerOrDestination,
-        Workshop
-    }
-    public ArrowTarget arrowTarget;
 
     private Vector2 currentPos;
     private SpriteRenderer sr;
@@ -35,29 +27,23 @@ public class IndicatorArrow : MonoBehaviour
 
     void Update()
     {
-        if (player == null) return;
+        if (player == null || playerController == null) return;
 
         Transform target = null;
 
-        if (arrowTarget == ArrowTarget.PassengerOrDestination)
+        if (playerController.HasPassenger())
         {
-            if (playerController == null) return;
+            if (DestinationManager.Instance != null)
+                target = CreateTempTransform(DestinationManager.Instance.currentDestination);
 
-            if (playerController.HasPassenger())
-            {
-                target = DestinationManager.Instance?.currentDestination;
-                if (sr != null) sr.color = destinationColor;
-            }
-            else
-            {
-                target = PassengerManager.Instance?.currentPassenger;
-                if (sr != null) sr.color = passengerColor;
-            }
+            if (sr != null) sr.color = destinationColor;
         }
-        else if (arrowTarget == ArrowTarget.Workshop)
+        else
         {
-            target = Workshop.Instance?.currentDestination;
-            if (sr != null) sr.color = workshopColor;
+            if (PassengerManager.Instance != null)
+                target = PassengerManager.Instance.currentPassenger;
+
+            if (sr != null) sr.color = passengerColor;
         }
 
         if (target == null) return;
@@ -71,5 +57,12 @@ public class IndicatorArrow : MonoBehaviour
 
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+    }
+
+    Transform CreateTempTransform(Vector3 pos)
+    {
+        GameObject temp = new GameObject("TempTarget");
+        temp.transform.position = pos;
+        return temp.transform;
     }
 }

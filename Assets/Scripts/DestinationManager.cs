@@ -1,16 +1,16 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 public class DestinationManager : MonoBehaviour
 {
     public static DestinationManager Instance;
 
-    [Header("Prefab & Spawn Area")]
-    public GameObject destinationPrefab;
-    public Vector2 spawnAreaMin = new Vector2(-8, -4);
-    public Vector2 spawnAreaMax = new Vector2(8, 4);
+    public Tilemap buildingTilemap;
 
-    [HideInInspector]
-    public Transform currentDestination;
+    [HideInInspector] public Vector3 currentDestination;
+
+    private List<Vector3> buildingPositions = new List<Vector3>();
 
     private void Awake()
     {
@@ -18,24 +18,30 @@ public class DestinationManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    public void SpawnDestination()
+    private void Start()
     {
-        if (destinationPrefab == null)
+        CacheBuildingPositions();
+    }
+
+    void CacheBuildingPositions()
+    {
+        buildingPositions.Clear();
+
+        BoundsInt bounds = buildingTilemap.cellBounds;
+
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
         {
-            Debug.LogWarning("Destination prefab saknas!");
-            return;
+            if (buildingTilemap.HasTile(pos))
+            {
+                buildingPositions.Add(buildingTilemap.GetCellCenterWorld(pos));
+            }
         }
+    }
 
-        GameObject playerGO = GameObject.FindWithTag("Player");
-        if (playerGO == null) return;
+    public void SetRandomDestination()
+    {
+        if (buildingPositions.Count == 0) return;
 
-        Vector2 spawnPos = MapManager.Instance.GetRandomFreePosition(
-            playerGO.transform.position, 5f);
-
-        GameObject dest = Instantiate(destinationPrefab, spawnPos, Quaternion.identity);
-        dest.SetActive(true);
-        currentDestination = dest.transform;
-
-        Debug.Log("Destination spawned at: " + spawnPos);
+        currentDestination = buildingPositions[Random.Range(0, buildingPositions.Count)];
     }
 }

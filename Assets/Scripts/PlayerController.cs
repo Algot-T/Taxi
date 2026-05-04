@@ -3,9 +3,12 @@
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController Instance;
+
     [Header("Movement")]
     public float moveSpeed = 10f;
     public float rotationSpeed = 200f;
+    private float speedModifier = 1f;
 
     private float moveInput;
     private float rotationInput;
@@ -14,7 +17,7 @@ public class PlayerController : MonoBehaviour
     [Header("Taxi Stats")]
     public int maxHP = 5;
     public int passengerReward = 20;
-    
+
     public int money = 0;
     public int currentHP;
 
@@ -24,13 +27,16 @@ public class PlayerController : MonoBehaviour
     [Header("Passenger Tracking")]
     private bool hasPassenger = false;
 
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         currentHP = maxHP;
-
-        Vector2 center = new Vector2(MapManager.Instance.Width / 2f, MapManager.Instance.Height / 2f);
-        transform.position = center;
 
         if (healthUI != null)
         {
@@ -46,17 +52,45 @@ public class PlayerController : MonoBehaviour
     {
         moveInput = Input.GetAxis("Vertical");
         rotationInput = -Input.GetAxis("Horizontal");
+
+        HandleDestinationCheck();
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            Debug.Log("Spelaren är just nu på: " + transform.position);
+        }
     }
 
     void FixedUpdate()
     {
-        rb.MovePosition(rb.position + (Vector2)transform.up * moveInput * moveSpeed * Time.fixedDeltaTime);
+        Collider2D hit = Physics2D.OverlapPoint(transform.position);
+
+        float targetModifier = (hit != null && hit.CompareTag("Roads")) ? 1f : 0.7f;
+
+        speedModifier = Mathf.Lerp(speedModifier, targetModifier, Time.fixedDeltaTime * 5f);
+
+        float finalSpeed = moveSpeed * speedModifier;
+
+        rb.MovePosition(rb.position + (Vector2)transform.up * moveInput * finalSpeed * Time.fixedDeltaTime);
         rb.MoveRotation(rb.rotation + rotationInput * rotationSpeed * Time.fixedDeltaTime);
     }
 
-    // =======================
-    // Passenger / Arrow System
-    // =======================
+    void HandleDestinationCheck()
+    {
+        if (!HasPassenger()) return;
+
+        if (DestinationManager.Instance != null)
+        {
+            float dist = Vector2.Distance(transform.position, DestinationManager.Instance.currentDestination);
+
+            if (dist < 1.5f)
+            {
+                DeliverPassenger();
+                PassengerManager.Instance.SpawnPassenger();
+            }
+        }
+    }
+
     public bool HasPassenger()
     {
         return hasPassenger;
@@ -90,27 +124,15 @@ public class PlayerController : MonoBehaviour
             {
                 passenger.PickUp();
                 PickUpPassenger();
-                DestinationManager.Instance.SpawnDestination();
+
+                if (DestinationManager.Instance != null)
+                    DestinationManager.Instance.SetRandomDestination();
+
                 return;
             }
         }
-
-        if (HasPassenger())
-        {
-            Destination destination = other.GetComponent<Destination>();
-            if (destination != null)
-            {
-                destination.Reach();
-                DeliverPassenger();
-                PassengerManager.Instance.SpawnPassenger();
-            }
-        }
-
     }
 
-    // =======================
-    // Damage / Health System
-    // =======================
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Enemy"))
@@ -136,19 +158,14 @@ public class PlayerController : MonoBehaviour
             GameOver();
     }
 
-    private void GameOver()
+    void GameOver()
     {
-        Debug.Log("GAME OVER");
-
         rb.velocity = Vector2.zero;
 
         if (GameOverManager.Instance != null)
             GameOverManager.Instance.ShowGameOver();
     }
 
-    // =======================
-    // Workshop / Upgrades
-    // =======================
     public void HealFull()
     {
         currentHP = maxHP;

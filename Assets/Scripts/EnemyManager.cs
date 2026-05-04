@@ -1,48 +1,42 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 public class EnemyManager : MonoBehaviour
 {
-    public static EnemyManager Instance;
     public GameObject enemyPrefab;
-    public int maxEnemies = 5;
+    public Tilemap roadTilemap;
 
-    void Awake()
+    private List<Vector3> roadPositions = new List<Vector3>();
+
+    private void Start()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        CacheRoads();
+        InvokeRepeating(nameof(SpawnEnemy), 1f, 3f);
     }
 
-    void Start()
+    void CacheRoads()
     {
-        SpawnEnemies();
-    }
+        roadPositions.Clear();
 
-    void Update()
-    {
-        if (GameObject.FindGameObjectsWithTag("Enemy").Length < maxEnemies)
+        BoundsInt bounds = roadTilemap.cellBounds;
+
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
         {
-            SpawnEnemy();
+            if (roadTilemap.HasTile(pos))
+            {
+                roadPositions.Add(roadTilemap.GetCellCenterWorld(pos));
+            }
         }
     }
 
-    void SpawnEnemies()
+    public void SpawnEnemy()
     {
-        for (int i = 0; i < maxEnemies; i++)
-        {
-            SpawnEnemy();
-        }
-    }
+        if (enemyPrefab == null) return;
+        if (roadPositions.Count == 0) return;
 
-    void SpawnEnemy()
-    {
-        GameObject playerGO = GameObject.FindWithTag("Player");
-        if (playerGO == null) return;
+        Vector3 spawnPos = roadPositions[Random.Range(0, roadPositions.Count)];
 
-        Vector2 spawnPos = MapManager.Instance.GetRandomFreePosition(Vector2.zero, 0f);
-
-        if (Vector2.Distance(spawnPos, playerGO.transform.position) >= 7f)
-        {
-            Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-        }
+        GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
     }
 }

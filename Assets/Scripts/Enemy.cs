@@ -6,8 +6,15 @@ public class Enemy : MonoBehaviour
     public float moveSpeed = 3f;
     public float detectionRadius = 5f;
 
+    public float roamRadius = 3f;
+    public float roamChangeTime = 2f;
+
     private Rigidbody2D rb;
     private Transform player;
+
+    private Vector2 roamTarget;
+    private float roamTimer;
+
     public bool hasHitPlayer = false;
 
     void Awake()
@@ -22,28 +29,57 @@ public class Enemy : MonoBehaviour
         GameObject playerGO = GameObject.FindWithTag("Player");
         if (playerGO != null)
             player = playerGO.transform;
+
+        PickNewRoamTarget();
     }
 
     void FixedUpdate()
     {
-        if (player == null || hasHitPlayer)
+        if (hasHitPlayer)
         {
             rb.velocity = Vector2.zero;
             return;
         }
 
-        Vector2 direction = player.position - transform.position;
-        float distance = direction.magnitude;
+        if (player != null)
+        {
+            float distance = Vector2.Distance(transform.position, player.position);
 
-        if (distance <= detectionRadius)
-        {
-            direction.Normalize();
-            rb.velocity = direction * moveSpeed;
+            if (distance <= detectionRadius)
+            {
+                ChasePlayer();
+                return;
+            }
         }
-        else
+
+        Roam();
+    }
+
+    void ChasePlayer()
+    {
+        Vector2 direction = (player.position - transform.position).normalized;
+        rb.velocity = direction * moveSpeed;
+    }
+
+    void Roam()
+    {
+        roamTimer -= Time.fixedDeltaTime;
+
+        if (roamTimer <= 0f)
         {
-            rb.velocity = Vector2.zero;
+            PickNewRoamTarget();
         }
+
+        Vector2 direction = (roamTarget - (Vector2)transform.position).normalized;
+        rb.velocity = direction * (moveSpeed * 0.5f);
+    }
+
+    void PickNewRoamTarget()
+    {
+        Vector2 randomOffset = Random.insideUnitCircle * roamRadius;
+        roamTarget = (Vector2)transform.position + randomOffset;
+
+        roamTimer = roamChangeTime;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

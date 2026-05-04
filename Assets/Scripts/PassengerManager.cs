@@ -1,16 +1,17 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 public class PassengerManager : MonoBehaviour
 {
     public static PassengerManager Instance;
 
-    [Header("Prefab & Spawn Area")]
     public GameObject passengerPrefab;
-    public Vector2 spawnAreaMin = new Vector2(-8, -4);
-    public Vector2 spawnAreaMax = new Vector2(8, 4);
+    public Tilemap roadTilemap;
 
-    [HideInInspector]
-    public Transform currentPassenger;
+    [HideInInspector] public Transform currentPassenger;
+
+    private List<Vector3> roadPositions = new List<Vector3>();
 
     private void Awake()
     {
@@ -20,58 +21,35 @@ public class PassengerManager : MonoBehaviour
 
     private void Start()
     {
+        CacheRoadPositions();
         SpawnPassenger();
+    }
+
+    void CacheRoadPositions()
+    {
+        roadPositions.Clear();
+
+        BoundsInt bounds = roadTilemap.cellBounds;
+
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
+        {
+            if (roadTilemap.HasTile(pos))
+            {
+                roadPositions.Add(roadTilemap.GetCellCenterWorld(pos));
+            }
+        }
     }
 
     public void SpawnPassenger()
     {
-        if (passengerPrefab == null)
-        {
-            Debug.LogWarning("Passenger prefab saknas!");
-            return;
-        }
+        if (passengerPrefab == null) return;
+        if (roadPositions.Count == 0) return;
 
-        GameObject playerGO = GameObject.FindWithTag("Player");
-        if (playerGO == null) return;
-
-        Vector2 playerPos = playerGO.transform.position;
-
-        float minDistance = 3f;
-        float maxDistance = 8f;
-
-        Vector2 spawnPos = Vector2.zero;
-        bool found = false;
-
-        int attempts = 0;
-
-        while (!found && attempts < 40)
-        {
-            Vector2 dir = Random.insideUnitCircle.normalized;
-
-            float dist = Random.Range(minDistance, maxDistance);
-
-            Vector2 candidate = playerPos + dir * dist;
-
-            Collider2D hit = Physics2D.OverlapCircle(candidate, 0.4f);
-
-            if (hit == null) 
-            {
-                spawnPos = candidate;
-                found = true;
-            }
-
-            attempts++;
-        }
-
-        if (!found)
-        {
-            Debug.LogWarning("Kunde inte hitta spawnplats nära spelaren.");
-            return;
-        }
+        Vector3 spawnPos = roadPositions[Random.Range(0, roadPositions.Count)];
 
         GameObject passenger = Instantiate(passengerPrefab, spawnPos, Quaternion.identity);
         currentPassenger = passenger.transform;
-
-        Debug.Log("Passenger spawned near player at: " + spawnPos);
+        Debug.Log("SpawnPassenger called");
+        Debug.Log("Road positions: " + roadPositions.Count);
     }
 }

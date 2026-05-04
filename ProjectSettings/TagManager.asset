@@ -7,11 +7,13 @@ TagManager:
   - Passenger
   - Enemy
   - Workshop
+  - Roads
+  - House
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - DangerZone
   - Water
   - UI
   - 
