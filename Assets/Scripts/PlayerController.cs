@@ -52,13 +52,6 @@ public class PlayerController : MonoBehaviour
     {
         moveInput = Input.GetAxis("Vertical");
         rotationInput = -Input.GetAxis("Horizontal");
-
-        HandleDestinationCheck();
-
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            Debug.Log("Spelaren är just nu på: " + transform.position);
-        }
     }
 
     void FixedUpdate()
@@ -76,29 +69,11 @@ public class PlayerController : MonoBehaviour
         }
 
         float targetModifier = (hit != null && hit.CompareTag("Roads")) ? 1f : 0.7f;
-
         speedModifier = Mathf.Lerp(speedModifier, targetModifier, Time.fixedDeltaTime * 5f);
-
         float finalSpeed = moveSpeed * speedModifier;
 
         rb.MovePosition(rb.position + (Vector2)transform.up * moveInput * finalSpeed * Time.fixedDeltaTime);
         rb.MoveRotation(rb.rotation + rotationInput * rotationSpeed * Time.fixedDeltaTime);
-    }
-
-    void HandleDestinationCheck()
-    {
-        if (!HasPassenger()) return;
-
-        if (DestinationManager.Instance != null)
-        {
-            float dist = Vector2.Distance(transform.position, DestinationManager.Instance.currentDestination);
-
-            if (dist < 1.5f)
-            {
-                DeliverPassenger();
-                PassengerManager.Instance.SpawnPassenger();
-            }
-        }
     }
 
     public bool HasPassenger()
@@ -120,7 +95,6 @@ public class PlayerController : MonoBehaviour
     public void AddMoneyFromPassenger()
     {
         money += passengerReward;
-
         if (MoneyUI.Instance != null)
             MoneyUI.Instance.UpdateMoney(money);
     }
@@ -141,6 +115,18 @@ public class PlayerController : MonoBehaviour
                 return;
             }
         }
+
+        if (HasPassenger() && other.CompareTag("DeliveryPoint"))
+        {
+            DeliverPassenger();
+
+            if (PassengerManager.Instance != null)
+            {
+                PassengerManager.Instance.SpawnPassenger();
+            }
+
+            Debug.Log("Passagerare levererad till byggnaden!");
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -160,18 +146,13 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHP -= damage;
-
-        if (healthUI != null)
-            healthUI.SetHealth(currentHP);
-
-        if (currentHP <= 0)
-            GameOver();
+        if (healthUI != null) healthUI.SetHealth(currentHP);
+        if (currentHP <= 0) GameOver();
     }
 
     void GameOver()
     {
         rb.velocity = Vector2.zero;
-
         if (GameOverManager.Instance != null)
             GameOverManager.Instance.ShowGameOver();
     }
@@ -179,8 +160,7 @@ public class PlayerController : MonoBehaviour
     public void HealFull()
     {
         currentHP = maxHP;
-        if (healthUI != null)
-            healthUI.SetHealth(currentHP);
+        if (healthUI != null) healthUI.SetHealth(currentHP);
     }
 
     public void UpgradeHP()

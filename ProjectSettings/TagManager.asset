@@ -9,6 +9,7 @@ TagManager:
   - Workshop
   - Roads
   - House
+  - DeliveryPoint
   layers:
   - Default
   - TransparentFX
