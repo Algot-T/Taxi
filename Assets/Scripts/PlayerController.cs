@@ -63,7 +63,17 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        Collider2D hit = Physics2D.OverlapPoint(transform.position);
+        Collider2D[] hits = Physics2D.OverlapPointAll(transform.position);
+        Collider2D hit = null;
+
+        foreach (var h in hits)
+        {
+            if (h.gameObject != gameObject)
+            {
+                hit = h;
+                break;
+            }
+        }
 
         float targetModifier = (hit != null && hit.CompareTag("Roads")) ? 1f : 0.7f;
 
